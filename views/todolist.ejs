@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo</title>
+</head>
+<body>
+    <h1><%=handle %>'s Todo list </h1>
+    <% if (todos) { %> 
+        <% for(let d in todos){ %>
+            <form action="/updatetodo" method="post">
+                <input id='<%=d%>' name="inputcheck" onChange="this.form.submit()" type="checkbox" value='<%=todos[d]['problemId'] %>'>
+                <input type="hidden" name="handle" value="<%=handle%> "/>
+                <label for='<%=d%>'>
+                    <ul>
+                        <% for(let x in todos[d]) {%>
+                            <% if(x === 'problemId') {%> 
+                                <li><%=x %>: <a href='https://codeforces.com<%=todos[d][`${x}`] %> '><%= todos[d][`${x}`] %></a></li>
+                            <% }else if(x==='problemName' || x==='problemStatus' || x==='handle'){%> 
+                                <li><%=x %>: <%= todos[d][`${x}`] %> </li> 
+                            <%}%> 
+                        <% } %> 
+                    </ul>
+                </label>
+            </form>
+        <% } %> 
+    <% } %>
+</body>
+</html>

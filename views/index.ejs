@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1><%= handle %> 's Submissions </h1>
+    <% if (submissions) { %> 
+        <% for(let d in submissions){ %>
+            <ul>
+            <% for(let x in submissions[d]) {%>
+                <% if(x === 'problemId') {%> 
+                    <li><%=x %>: <a href='https://codeforces.com<%=submissions[d][`${x}`] %> '><%= submissions[d][`${x}`] %></a></li>
+                <% }else if(x==='problemName' || x==='problemStatus'){%> 
+                    <li><%=x %>: <%= submissions[d][`${x}`] %> </li> 
+                <%}%> 
+            <% } %> 
+            </ul>
+        <% } %> 
+    <% } %>
+</body>
+</html>
