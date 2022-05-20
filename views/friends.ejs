@@ -8,9 +8,15 @@
 </head>
 <body>
     <h1>All friends of <%= handle %> </h1>
+    <a href="/addnew/<%= handle %>">Add new friend</a>
     <ul>
         <% for(let i=0;i<friends.length;i++){ %> 
             <li><%= friends[i] %> </li>
+            <form action="/unfollow" method="post">
+                <input type="hidden" name="userHandle" value="<%=handle%> "/>
+                <input type="hidden" name="friendHandle" value="<%=friends[i]%> "/>
+                <button onclick="this.form.submit()" >unfollow</button>
+            </form>
         <% } %> 
     </ul>
     

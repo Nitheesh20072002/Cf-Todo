@@ -8,6 +8,7 @@ const userSchema= new Schema({
     followers: [String],
     submissions:[
         {
+            handle:String,
             problemId: String,
             problemName:String,
             problemStatus: String,

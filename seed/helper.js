@@ -30,12 +30,7 @@ const seedDB = async () => {
             followers: arr,
         });
         await getData(sample[i],4).then((data) =>{
-            const submis={
-                problemId: data.problemId,
-                problemName: data.problemName,
-                problemStatus: data.problemStatus,
-            }
-            newuser.submissions.push(submis);
+            newuser.submissions.push(data);
         });
         await newuser.save();
     }    

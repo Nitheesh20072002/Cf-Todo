@@ -2,11 +2,11 @@ import express from 'express';
 import path from 'path';
 import {getData} from '../new/utils/scrapping.js';
 import Joi from 'joi';
-import { userSchema } from './schemas.js';
+// import { userSchema } from './schemas.js';
 import User from './models/user.js'
 import {mongoose} from 'mongoose';
 import { updateNew,removefromtodo } from './utils/todohelper.js';
-// import { updateNew } from './utils/todohelper.js';
+
 
 mongoose.connect('mongodb://localhost:27017/cf',{
     useNewUrlParser:true,
@@ -28,24 +28,6 @@ app.set('view engine','ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// var db=[
-//     {   'handle':'NitheeshKumarChapala',
-//         'friends':['neal','tourist','Errichto','Priyansh31dec','NitheeshKumar4'],
-//     },
-//     {
-//         'handle': 'neal',
-//         'friends':['NitheeshKumarChapala','tourist','Errichto','Priyansh31dec','NitheeshKumar4'],
-//     },
-//     {   
-//         'handle': 'tourist',
-//         'friends':['neal','maroonrk','Errichto','Priyansh31dec','NitheeshKumar4'],
-//     },
-//     {   
-//         'handle': 'Priyansh31dec',
-//         'friends':['neal','tourist','Errichto','Benq','NitheeshKumar4'],
-//     },
-// ];
-
 app.get('/',(req,res)=>{
     res.send('Home');
 });
@@ -61,7 +43,6 @@ app.get('/submissions/:handle', async (req,res)=>{
 app.get('/todo/:handle',async (req,res) =>{
     const {handle}=req.params;
     const details=await User.find({handle:handle});
-    console.log(handle);
     if(details===undefined || details[0]===undefined || details[0].todo===undefined){
         res.send('Undefined error');
     }else {
@@ -69,7 +50,7 @@ app.get('/todo/:handle',async (req,res) =>{
         res.render('todolist',{handle,todos});
     }
 });
-// updateNew();
+
 app.get('/:handle', async (req,res)=>{
     const {handle}=req.params;
     const details=await User.find({handle:handle});
@@ -90,31 +71,64 @@ app.post('/updatetodo',async (req,res)=>{
     const url=`/todo/${handle}`;
     res.redirect(url);
 });
-// app.get('/addnew',(req,res)=>{
-//     res.render('new');
-// });
-// app.post('/addnew',(req,res)=>{
-//     const {userHandle,friendHandle} =req.body;
-//     console.log(userHandle);
-//     console.log(friendHandle);
-//     if(userHandle && friendHandle){
-//         let ind=findind(userHandle);
-//         if(ind=== (-1)){
-//             db.push({'handle':userHandle,'friends':[friendHandle]});
-//         }else{
-//             let check=true;
-//             // for(let i=0;i<db[ind].friends.length;i++){
-//             //     if(db[ind].friends[i] === friendHandle){
-//             //         check=false;break;
-//             //     }
-//             // }
-//             // if(check){
-//             //     db.friends[ind].push(friendHandle);
-//             // }
-//         }
-//     }else res.send('Empty data found');
-// });
 
+app.get('/addnew/:handle',(req,res)=>{
+    const {handle}=req.params;
+    res.render('new',{handle});
+});
+
+app.post('/addnew',async (req,res)=>{
+    let {userHandle,friendHandle} =req.body;
+    userHandle=userHandle.trim();
+    friendHandle=friendHandle.trim();
+    if(userHandle && friendHandle){
+        const checkin=await User.find({'handle':friendHandle});
+        if(checkin.length === 0){
+            // res.send('Not found in db');
+            await User.updateOne({'handle':userHandle},{$push:{"following": friendHandle}});
+            const newuser = new User({
+                'handle': friendHandle,
+                'following': [],
+                'followers': [userHandle],
+                'todo':[],
+            });
+            await getData(friendHandle,2).then(async (data) =>{
+                newuser.submissions.push(data);
+                await User.updateOne({'handle':userHandle},{$push:{"todo": data}});
+            }).catch(err => console.log(err));
+            await newuser.save();
+        }else{
+            const followin=(await User.find({'handle':userHandle}))['0'].following;
+            let pre=true;
+            followin.forEach(handler => {
+                if(handler===friendHandle) pre=false;
+            });
+            if(pre){
+                await User.updateOne({'handle':userHandle},{$push:{"following": friendHandle}});
+                const submis=checkin['0'].submissions;
+                // console.log(submis);
+                if(submis.length !==0 )await User.updateOne({'handle':userHandle},{$push:{"todo": submis}});
+            };
+        }        
+        res.redirect(`/${userHandle}`);
+    }else res.send('Empty data found');
+    // res.send('added');
+});
+
+app.post('/unfollow',async (req,res)=>{
+    let {userHandle,friendHandle} =req.body;
+    userHandle=userHandle.trim();
+    friendHandle=friendHandle.trim();
+    console.log(userHandle);
+    console.log(friendHandle);
+    await User.updateOne({'handle':userHandle},{$pull:{"following": friendHandle}});
+    await User.updateOne({'handle':friendHandle},{$pull:{"followers": userHandle}});
+    const data=(await User.find({'handle':friendHandle}))['0'].submissions;
+    data.forEach(async (submis)=>{
+        await removefromtodo(userHandle,submis.problemId);
+    });
+    res.redirect(`/${userHandle}`);
+});
 // app.get('/:handle',async (req,res)=>{
 //     const handle=req.params.handle;
 //     const friends=findByHandle(handle);
